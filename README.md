@@ -1,6 +1,6 @@
 # 🎓 IskoBot
 
-A Discord bot built for the Iskord Community Server, a space for incoming UP Diiman freshmen to connect and make friends. IskoBot helps incoming students find classmates, manage their class schedules, discover study buddies, and build class channel streaks all within Discord.
+A Discord bot built for the Iskord Community Server, a space for incoming UP Diliman freshmen to connect and make friends. IskoBot helps incoming students find classmates, manage their class schedules, discover study buddies, and build class channel streaks all within Discord.
 
 ---
 
@@ -24,10 +24,12 @@ A Discord bot built for the Iskord Community Server, a space for incoming UP Dii
 - **Classmate Finder** — Find other students in the same class or taking the same course
 - **Study Buddy** — Randomly get matched with a classmate as a study buddy
 - **Common Classes** — See which classes you share with a specific student
+- **Resources** — Share and browse study resources per course, accessible to all sections
 - **Class Streaks** — Class channels earn streaks when at least 3 different students message daily, similar to Snapchat streaks
 - **Streak Leaderboard** — See which class channels have the longest active streaks
 - **Welcome Messages** — New members are greeted when they join the server
 - **FAQ System** — Keyword-based auto-responses for common questions
+- **College Advice** — Random college survival tips for freshmen
 
 ---
 
@@ -43,7 +45,7 @@ A Discord bot built for the Iskord Community Server, a space for incoming UP Dii
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/yourusername/IskoBot.git
+git clone https://github.com/lexcetera/IskoBot.git
 cd IskoBot
 ```
 
@@ -111,6 +113,7 @@ In the Discord Developer Portal under your app's **Bot** tab, enable:
 | `/addclass <course> <schedule>` | Add a class to your list. Creates a private class channel automatically |
 | `/removeclass <course> <schedule>` | Remove a class from your list. Deletes the channel if no students remain |
 | `/myclasses` | View all your registered classes |
+| `/clearclasses` | Remove yourself from all classes at once. Useful at the end of the semester! |
 
 ### Classmate Finder
 
@@ -128,12 +131,26 @@ In the Discord Developer Portal under your app's **Bot** tab, enable:
 | `/findstudybuddy` | Get a randomly selected study buddy from any of your classes |
 | `/findstudybuddy <class>` | Get a randomly selected study buddy from a specific class |
 
+### Resources
+
+| Command | Description |
+|---|---|
+| `/resources add <course> <title> <link>` | Add a study resource for a course. Shared across all sections |
+| `/resources list <course>` | Browse all study resources shared for a course |
+
 ### Streaks
 
 | Command | Description |
 |---|---|
 | `/streak info <course> <schedule>` | View the current streak and today's activity for a class channel |
 | `/streak leaderboard` | View the top 10 class channels ranked by streak |
+
+### Misc
+
+| Command | Description |
+|---|---|
+| `/advice` | Get a random college survival tip |
+| `/help` | Show the full command list with descriptions |
 
 ---
 
@@ -145,15 +162,20 @@ IskoBot/
 │   ├── commands/
 │   │   ├── addclass.js
 │   │   ├── removeclass.js
+│   │   ├── clearclasses.js
 │   │   ├── myclasses.js
 │   │   ├── findclassmate.js
 │   │   ├── findcourse.js
 │   │   ├── findstudybuddy.js
 │   │   ├── commonclasses.js
-│   │   └── streak.js
+│   │   ├── resources.js
+│   │   ├── streak.js
+│   │   ├── advice.js
+│   │   └── help.js
 │   ├── data/                    ← auto-created on first run
 │   │   ├── users.json
 │   │   ├── streaks.json
+│   │   ├── resources.json
 │   │   └── faqs.json
 │   ├── events/
 │   │   ├── messageCreate.js     ← handles messages and streak tracking
@@ -163,6 +185,7 @@ IskoBot/
 │   │   ├── database.js          ← read/write helpers for users.json
 │   │   ├── channelManager.js    ← class channel creation and management
 │   │   ├── streakManager.js     ← streak logic
+│   │   ├── resourceManager.js   ← resource file management
 │   │   └── faqManager.js        ← faq file management
 │   ├── deploy.js                ← registers slash commands with Discord
 │   └── index.js                 ← main entry point
@@ -202,6 +225,21 @@ Stores streak data per class channel.
     "lastUpdated": "2024-01-15",
     "todayUsers": ["123456789", "987654321", "112233445"]
   }
+}
+```
+
+### `resources.json`
+Stores study resources per course.
+```json
+{
+  "Math 21": [
+    {
+      "title": "Math 21 Reviewer",
+      "link": "https://drive.google.com/...",
+      "addedBy": "john_doe",
+      "addedAt": "2024-01-15"
+    }
+  ]
 }
 ```
 

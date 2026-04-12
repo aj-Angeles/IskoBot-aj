@@ -15,6 +15,10 @@ const pages = [
       {
         name: '/myclasses',
         value: 'View all your currently registered classes in a neat list.'
+      },
+      {
+        name: '/clearclasses',
+        value: 'Remove yourself from all your classes at once. Great for when the semester ends! You will be asked to confirm before anything is cleared.'
       }
     ]
   },
@@ -40,7 +44,7 @@ const pages = [
     ]
   },
   {
-    title: '🎲 Study Buddy',
+    title: '🎲 Study Buddy & Resources',
     fields: [
       {
         name: '/findstudybuddy',
@@ -49,11 +53,19 @@ const pages = [
       {
         name: '/findstudybuddy <class>',
         value: 'Randomly get matched with a study buddy from a specific class you are in.\n**Example:** `/findstudybuddy Math 21 TWHFX-1`'
+      },
+      {
+        name: '/resources add <course> <title> <link>',
+        value: 'Add a study resource for a course. Resources are shared across all sections of the same course.\n**Example:** `/resources add Math 21 Math 21 Reviewer https://drive.google.com/...`'
+      },
+      {
+        name: '/resources list <course>',
+        value: 'Browse all study resources shared for a course.\n**Example:** `/resources list Math 21`'
       }
     ]
   },
   {
-    title: '🔥 Streaks',
+    title: '🔥 Streaks & Misc',
     fields: [
       {
         name: '/streak info <course> <schedule>',
@@ -61,7 +73,15 @@ const pages = [
       },
       {
         name: '/streak leaderboard',
-        value: 'View the top 10 class channels ranked by their current streak. See who is the most active!'
+        value: 'View the top 10 class channels ranked by their current streak.'
+      },
+      {
+        name: '/advice',
+        value: 'Get a random college survival tip. 💡'
+      },
+      {
+        name: '/help',
+        value: 'Show this help menu.'
       }
     ]
   }
@@ -112,13 +132,11 @@ module.exports = {
       fetchReply: true
     });
 
-    // Listen for button clicks for 5 minutes
     const collector = reply.createMessageComponentCollector({
       time: 5 * 60 * 1000
     });
 
     collector.on('collect', async (btn) => {
-      // Only the user who ran the command can use the buttons
       if (btn.user.id !== interaction.user.id) {
         return btn.reply({
           content: '⚠️ Only the person who ran this command can navigate the pages!',
@@ -135,7 +153,6 @@ module.exports = {
       });
     });
 
-    // Disable buttons when collector expires
     collector.on('end', async () => {
       const disabledButtons = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
