@@ -1,19 +1,19 @@
 # 🎓 IskoBot
 
-A Discord bot built for the Iskord Community Server, a space for incoming UP Diiman freshmen to connect and make friends. IskoBot helps incoming students find classmates, manage their class schedules, discover study buddies, and build class channel streaks all within Discord.
+A Discord bot built for freshman university communities. IskoBot helps incoming students find classmates, manage their class schedules, discover study buddies, and build class channel streaks — all within Discord.
 
 ---
 
 ## 📋 Table of Contents
 
-- [Features](#features)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Commands](#commands)
-- [Project Structure](#project-structure)
-- [Data Storage](#data-storage)
-- [Contributing](#contributing)
+- [Features](#-features)
+- [Prerequisites](#-prerequisites)
+- [Installation](#-installation)
+- [Configuration](#-configuration)
+- [Commands](#-commands)
+- [Project Structure](#-project-structure)
+- [Data Storage](#-data-storage)
+- [Contributing](#-contributing)
 
 ---
 
@@ -59,30 +59,12 @@ CLIENT_ID=your_client_id_here
 GUILD_ID=your_server_id_here
 ```
 
-**4. Initialize data files**
-
-Create the following empty JSON files:
-```bash
-echo "{}" > src/data/users.json
-echo "{}" > src/data/streaks.json
-```
-
-And create `src/data/faqs.json` with your FAQ entries:
-```json
-[
-  {
-    "keywords": ["hello", "hi", "hey"],
-    "response": "lex pogi 😎"
-  }
-]
-```
-
-**5. Start the bot**
+**4. Start the bot**
 ```bash
 npm start
 ```
 
-This will automatically deploy slash commands and start the bot.
+Data files are created automatically on first run. No manual setup needed!
 
 ---
 
@@ -169,21 +151,22 @@ IskoBot/
 │   │   ├── findstudybuddy.js
 │   │   ├── commonclasses.js
 │   │   └── streak.js
-│   ├── data/
-│   │   ├── users.json        ← user and class data
-│   │   ├── streaks.json      ← streak data
-│   │   └── faqs.json         ← FAQ keyword responses
+│   ├── data/                    ← auto-created on first run
+│   │   ├── users.json
+│   │   ├── streaks.json
+│   │   └── faqs.json
 │   ├── events/
-│   │   ├── messageCreate.js  ← handles messages and streak tracking
-│   │   ├── guildMemberAdd.js ← welcome message on join
+│   │   ├── messageCreate.js     ← handles messages and streak tracking
+│   │   ├── guildMemberAdd.js    ← welcome message on join
 │   │   └── guildMemberRemove.js ← cleanup on leave
 │   ├── utils/
-│   │   ├── database.js       ← read/write helpers for users.json
-│   │   ├── channelManager.js ← class channel creation and management
-│   │   └── streakManager.js  ← streak logic
-│   ├── deploy.js             ← registers slash commands with Discord
-│   └── index.js              ← main entry point
-├── .env                      ← secret credentials (never commit this)
+│   │   ├── database.js          ← read/write helpers for users.json
+│   │   ├── channelManager.js    ← class channel creation and management
+│   │   ├── streakManager.js     ← streak logic
+│   │   └── faqManager.js        ← faq file management
+│   ├── deploy.js                ← registers slash commands with Discord
+│   └── index.js                 ← main entry point
+├── .env                         ← secret credentials (never commit this)
 ├── .gitignore
 ├── nodemon.json
 └── package.json
@@ -193,7 +176,7 @@ IskoBot/
 
 ## 🗄️ Data Storage
 
-IskoBot uses JSON files for data storage — no database required. All data is stored locally in the `src/data/` directory.
+IskoBot uses JSON files for data storage — no database required. All files are created automatically on first run.
 
 ### `users.json`
 Stores each student's Discord ID, username, and registered classes.
@@ -244,12 +227,6 @@ Stores keyword-response pairs for the FAQ system.
 3. Commit your changes: `git commit -m "Add your feature"`
 4. Push to the branch: `git push origin feature/your-feature`
 5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
 
 ---
 
