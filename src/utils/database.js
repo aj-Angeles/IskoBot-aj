@@ -1,14 +1,28 @@
 const fs = require('fs');
 const path = require('path');
 
-const dbPath = path.join(__dirname, '../data/users.json');
+const dataDir = path.join(__dirname, '../data');
+const dbPath = path.join(dataDir, 'users.json');
+
+function ensureDataFiles() {
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+    console.log('✅ Created data directory');
+  }
+  if (!fs.existsSync(dbPath)) {
+    fs.writeFileSync(dbPath, JSON.stringify({}, null, 2));
+    console.log('✅ Created users.json');
+  }
+}
 
 function readDB() {
+  ensureDataFiles();
   const data = fs.readFileSync(dbPath, 'utf-8');
   return JSON.parse(data);
 }
 
 function writeDB(data) {
+  ensureDataFiles();
   fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
 }
 
@@ -35,6 +49,7 @@ function updateUser(userId, userData) {
   db[userId] = userData;
   writeDB(db);
 }
+
 function getClassmates(userId) {
   const db = readDB();
   const user = db[userId];
@@ -96,4 +111,5 @@ function getUsersByCourse(course) {
 
   return results;
 }
+
 module.exports = { readDB, writeDB, getUser, saveUser, updateUser, getClassmates, getClassmatesByClass, getUsersByCourse };
