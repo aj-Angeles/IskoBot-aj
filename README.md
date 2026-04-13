@@ -4,20 +4,20 @@ A Discord bot built for the Iskord Community Server, a space for incoming UP Dil
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Features](#-features)
-- [Prerequisites](#-prerequisites)
-- [Installation](#-installation)
-- [Configuration](#-configuration)
-- [Commands](#-commands)
-- [Project Structure](#-project-structure)
-- [Data Storage](#-data-storage)
-- [Contributing](#-contributing)
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Commands](#commands)
+- [Project Structure](#project-structure)
+- [Data Storage](#data-storage)
+- [Contributing](#contributing)
 
 ---
 
-## ✨ Features
+## Features
 
 - **Class Management** — Students can register their classes using course codes and schedule identifiers (e.g. `Math 21 TWHFX-1`)
 - **Private Class Channels** — Automatically creates a private channel for each unique class. Only registered students can see and access their class channels
@@ -33,11 +33,11 @@ A Discord bot built for the Iskord Community Server, a space for incoming UP Dil
 - **Welcome Messages** — New members are greeted when they join the server
 - **FAQ System** — Keyword-based auto-responses for common questions
 - **College Advice** — Random college survival tips for freshmen
-- **Admin Suite** — Full admin command system for managing users, classes, resources, and data
+- **Admin Suite** — Full admin command system for managing users, classes, resources, roles, and data
 
 ---
 
-## 🛠️ Prerequisites
+## Prerequisites
 
 - [Node.js](https://nodejs.org) v18 or higher
 - A [Discord account](https://discord.com)
@@ -45,7 +45,7 @@ A Discord bot built for the Iskord Community Server, a space for incoming UP Dil
 
 ---
 
-## 🚀 Installation
+## Installation
 
 **1. Clone the repository**
 ```bash
@@ -70,11 +70,11 @@ GUILD_ID=your_server_id_here
 npm start
 ```
 
-Data files are created automatically on first run. No manual setup needed!
+Data files and college roles are created automatically on first run. No manual setup needed!
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 ### Getting Your Credentials
 
@@ -103,11 +103,11 @@ https://discord.com/oauth2/authorize?client_id=YOUR_CLIENT_ID&scope=bot+applicat
 
 ### Required Privileged Gateway Intents
 In the Discord Developer Portal under your app's **Bot** tab, enable:
-- ✅ Server Members Intent
-- ✅ Message Content Intent
+- Server Members Intent
+- Message Content Intent
 
 ### College Roles
-For `/userinfo` and `/collegeinfo` to work correctly, create roles in your Discord server with these exact names:
+College roles are created automatically on first bot start. They will appear hoisted (separated) on the member list. The following roles will be created:
 - College of Architecture
 - College of Arts and Letters
 - College of Education
@@ -127,7 +127,7 @@ For `/userinfo` and `/collegeinfo` to work correctly, create roles in your Disco
 
 ---
 
-## 💬 Commands
+## Commands
 
 ### Class Management
 
@@ -168,14 +168,14 @@ For `/userinfo` and `/collegeinfo` to work correctly, create roles in your Disco
 | `/streak info <course> <schedule>` | View the current streak and today's activity for a class channel |
 | `/streak leaderboard` | View the top 10 class channels ranked by streak |
 
-### Info & Stats
+### Info and Stats
 
 | Command | Description |
 |---|---|
-| `/userinfo` | View your own profile — college, registered classes |
+| `/userinfo` | View your own profile — college and registered classes |
 | `/userinfo <user>` | View another student's profile |
 | `/classinfo <course> <schedule>` | View info about a specific class — students, streak, resources |
-| `/serverstats` | View server-wide statistics — total students, classes, streaks, top courses |
+| `/serverstats` | View server-wide statistics |
 | `/collegeinfo` | View student counts for all UP Diliman colleges |
 | `/collegeinfo <college>` | View students registered under a specific college |
 
@@ -198,11 +198,13 @@ For `/userinfo` and `/collegeinfo` to work correctly, create roles in your Disco
 | `/admin removeuser <user>` | Completely erase a user from the system |
 | `/admin removeresource <course> <number>` | Remove a specific resource from a course by its number |
 | `/admin clearresources <course>` | Wipe all resources for a specific course |
+| `/admin addrole <user> <role>` | Assign a college role to a user |
+| `/admin removerole <user> <role>` | Remove a college role from a user |
 | `/admin wipedata <target>` | Wipe bot data — choose from users, streaks, resources, faqs, or all |
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 IskoBot/
@@ -225,24 +227,24 @@ IskoBot/
 │   │   ├── advice.js
 │   │   ├── help.js
 │   │   └── admin.js
-│   ├── data/                    ← auto-created on first run
+│   ├── data/                    <- auto-created on first run
 │   │   ├── users.json
 │   │   ├── streaks.json
 │   │   ├── resources.json
 │   │   └── faqs.json
 │   ├── events/
-│   │   ├── messageCreate.js     ← handles messages and streak tracking
-│   │   ├── guildMemberAdd.js    ← welcome message on join
-│   │   └── guildMemberRemove.js ← cleanup on leave
+│   │   ├── messageCreate.js     <- handles messages and streak tracking
+│   │   ├── guildMemberAdd.js    <- welcome message on join
+│   │   └── guildMemberRemove.js <- cleanup on leave
 │   ├── utils/
-│   │   ├── database.js          ← read/write helpers for users.json
-│   │   ├── channelManager.js    ← class channel creation and management
-│   │   ├── streakManager.js     ← streak logic
-│   │   ├── resourceManager.js   ← resource file management
-│   │   └── faqManager.js        ← faq file management
-│   ├── deploy.js                ← registers slash commands with Discord
-│   └── index.js                 ← main entry point
-├── .env                         ← secret credentials (never commit this)
+│   │   ├── database.js          <- read/write helpers for users.json
+│   │   ├── channelManager.js    <- class channel creation and management
+│   │   ├── streakManager.js     <- streak logic
+│   │   ├── resourceManager.js   <- resource file management
+│   │   └── faqManager.js        <- faq file management
+│   ├── deploy.js                <- registers slash commands with Discord
+│   └── index.js                 <- main entry point
+├── .env                         <- secret credentials (never commit this)
 ├── .gitignore
 ├── nodemon.json
 └── package.json
@@ -250,11 +252,11 @@ IskoBot/
 
 ---
 
-## 🗄️ Data Storage
+## Data Storage
 
 IskoBot uses JSON files for data storage — no database required. All files are created automatically on first run.
 
-### `users.json`
+### users.json
 Stores each student's Discord ID, username, and registered classes.
 ```json
 {
@@ -269,7 +271,7 @@ Stores each student's Discord ID, username, and registered classes.
 }
 ```
 
-### `streaks.json`
+### streaks.json
 Stores streak data per class channel.
 ```json
 {
@@ -281,7 +283,7 @@ Stores streak data per class channel.
 }
 ```
 
-### `resources.json`
+### resources.json
 Stores study resources per course.
 ```json
 {
@@ -296,7 +298,7 @@ Stores study resources per course.
 }
 ```
 
-### `faqs.json`
+### faqs.json
 Stores keyword-response pairs for the FAQ system.
 ```json
 [
@@ -307,11 +309,11 @@ Stores keyword-response pairs for the FAQ system.
 ]
 ```
 
-> ⚠️ The `src/data/` directory is listed in `.gitignore` to prevent student data from being committed to version control.
+> The `src/data/` directory is listed in `.gitignore` to prevent student data from being committed to version control.
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a new branch: `git checkout -b feature/your-feature`
@@ -321,4 +323,4 @@ Stores keyword-response pairs for the FAQ system.
 
 ---
 
-*Built with ❤️ for freshman students. Good luck this semester! 🎓*
+*Built with love for freshman students. Good luck this semester!*

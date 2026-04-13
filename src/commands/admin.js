@@ -1,10 +1,29 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
 const { getUser, updateUser, readDB, writeDB, getClassmatesByClass } = require('../utils/database');
-const { getResources, writeResources } = require('../utils/resourceManager');
+const { getResources } = require('../utils/resourceManager');
 const fs = require('fs');
 const path = require('path');
 
 const dataDir = path.join(__dirname, '../data');
+
+const COLLEGE_ROLES = [
+  'College of Architecture',
+  'College of Arts and Letters',
+  'College of Education',
+  'College of Engineering',
+  'College of Fine Arts',
+  'College of Home Economics',
+  'College of Human Kinetics',
+  'College of Law',
+  'College of Media and Communication',
+  'College of Music',
+  'College of Science',
+  'College of Social Sciences and Philosophy',
+  'National College of Public Administration and Governance',
+  'School of Economics',
+  'School of Library and Information Studies',
+  'School of Statistics',
+];
 
 function normalizeCourse(course) {
   return course
@@ -60,13 +79,14 @@ async function confirmAction(interaction, description, onConfirm) {
   });
 }
 
+const roleChoices = COLLEGE_ROLES.map(r => ({ name: r, value: r }));
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('admin')
     .setDescription('Admin only commands')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
 
-    // addclass
     .addSubcommand(sub =>
       sub.setName('addclass')
         .setDescription('Add a class to a user')
@@ -74,7 +94,6 @@ module.exports = {
         .addStringOption(o => o.setName('course').setDescription('Course name e.g. Math 21').setRequired(true))
         .addStringOption(o => o.setName('schedule').setDescription('Schedule e.g. TWHFX-1').setRequired(true)))
 
-    // removeclass
     .addSubcommand(sub =>
       sub.setName('removeclass')
         .setDescription('Remove a class from a user')
@@ -82,32 +101,27 @@ module.exports = {
         .addStringOption(o => o.setName('course').setDescription('Course name e.g. Math 21').setRequired(true))
         .addStringOption(o => o.setName('schedule').setDescription('Schedule e.g. TWHFX-1').setRequired(true)))
 
-    // clearclasses
     .addSubcommand(sub =>
       sub.setName('clearclasses')
         .setDescription('Clear all classes from a user')
         .addUserOption(o => o.setName('user').setDescription('Target user').setRequired(true)))
 
-    // removeuser
     .addSubcommand(sub =>
       sub.setName('removeuser')
         .setDescription('Completely erase a user from the system')
         .addUserOption(o => o.setName('user').setDescription('Target user').setRequired(true)))
 
-    // removeresource
     .addSubcommand(sub =>
       sub.setName('removeresource')
         .setDescription('Remove a specific resource from a course')
         .addStringOption(o => o.setName('course').setDescription('Course name e.g. Math 21').setRequired(true))
         .addIntegerOption(o => o.setName('number').setDescription('Resource number from /resources list').setRequired(true)))
 
-    // clearresources
     .addSubcommand(sub =>
       sub.setName('clearresources')
         .setDescription('Wipe all resources for a course')
         .addStringOption(o => o.setName('course').setDescription('Course name e.g. Math 21').setRequired(true)))
 
-    // wipedata
     .addSubcommand(sub =>
       sub.setName('wipedata')
         .setDescription('Wipe bot data')
@@ -121,7 +135,27 @@ module.exports = {
               { name: 'Streaks', value: 'streaks' },
               { name: 'Resources', value: 'resources' },
               { name: 'FAQs', value: 'faqs' }
-            ))),
+            )))
+
+    .addSubcommand(sub =>
+      sub.setName('addrole')
+        .setDescription('Add a college role to a user')
+        .addUserOption(o => o.setName('user').setDescription('Target user').setRequired(true))
+        .addStringOption(o =>
+          o.setName('role')
+            .setDescription('College role to assign')
+            .setRequired(true)
+            .addChoices(...roleChoices)))
+
+    .addSubcommand(sub =>
+      sub.setName('removerole')
+        .setDescription('Remove a college role from a user')
+        .addUserOption(o => o.setName('user').setDescription('Target user').setRequired(true))
+        .addStringOption(o =>
+          o.setName('role')
+            .setDescription('College role to remove')
+            .setRequired(true)
+            .addChoices(...roleChoices))),
 
   async execute(interaction) {
     await interaction.deferReply({ ephemeral: true });
@@ -141,31 +175,21 @@ module.exports = {
       saveUser(target.id, target.username);
       const user = getUser(target.id);
 
-      const alreadyAdded = user.classes.some(
-        c => c.course === course && c.schedule === schedule
-      );
-
+      const alreadyAdded = user.classes.some(c => c.course === course && c.schedule === schedule);
       if (alreadyAdded) {
-        return interaction.editReply({
-          content: `⚠️ **${target.username}** is already in **${course} ${schedule}**!`,
-        });
+        return interaction.editReply({ content: `⚠️ **${target.username}** is already in **${course} ${schedule}**!` });
       }
 
       const existingClassmates = getClassmatesByClass(course, schedule);
       user.classes.push({ course, schedule });
       updateUser(target.id, user);
 
-      await interaction.editReply({
-        content: `✅ Added **${course} ${schedule}** to **${target.username}**'s classes!`,
-      });
+      await interaction.editReply({ content: `✅ Added **${course} ${schedule}** to **${target.username}**'s classes!` });
 
       try {
-        const channelName = `${course}-${schedule}`
-          .toLowerCase()
-          .replace(/\s+/g, '-')
-          .replace(/[^a-z0-9-]/g, '');
-
+        const channelName = `${course}-${schedule}`.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         await guild.channels.fetch();
+
         let category = guild.channels.cache.find(c => c.type === 4 && c.name.toLowerCase() === 'class channels');
         if (!category) {
           category = await guild.channels.create({ name: 'Class Channels', type: 4 });
@@ -199,17 +223,12 @@ module.exports = {
       const target = interaction.options.getUser('user');
       const course = normalizeCourse(interaction.options.getString('course').trim());
       const schedule = interaction.options.getString('schedule').trim().toUpperCase();
-
       const user = getUser(target.id);
 
-      if (!user) {
-        return interaction.editReply({ content: `⚠️ **${target.username}** is not registered in the system!` });
-      }
+      if (!user) return interaction.editReply({ content: `⚠️ **${target.username}** is not registered in the system!` });
 
       const index = user.classes.findIndex(c => c.course === course && c.schedule === schedule);
-      if (index === -1) {
-        return interaction.editReply({ content: `⚠️ **${target.username}** is not in **${course} ${schedule}**!` });
-      }
+      if (index === -1) return interaction.editReply({ content: `⚠️ **${target.username}** is not in **${course} ${schedule}**!` });
 
       user.classes.splice(index, 1);
       updateUser(target.id, user);
@@ -273,11 +292,7 @@ module.exports = {
             }
           }
 
-          await interaction.editReply({
-            content: `✅ Cleared all classes from **${target.username}**!`,
-            embeds: [],
-            components: []
-          });
+          await interaction.editReply({ content: `✅ Cleared all classes from **${target.username}**!`, embeds: [], components: [] });
         }
       );
     }
@@ -289,9 +304,7 @@ module.exports = {
       const target = interaction.options.getUser('user');
       const user = getUser(target.id);
 
-      if (!user) {
-        return interaction.editReply({ content: `⚠️ **${target.username}** is not registered in the system!` });
-      }
+      if (!user) return interaction.editReply({ content: `⚠️ **${target.username}** is not registered in the system!` });
 
       await confirmAction(
         interaction,
@@ -318,16 +331,11 @@ module.exports = {
             }
           }
 
-          // Delete user from database
           const db = readDB();
           delete db[target.id];
           writeDB(db);
 
-          await interaction.editReply({
-            content: `✅ **${target.username}** has been completely removed from the system!`,
-            embeds: [],
-            components: []
-          });
+          await interaction.editReply({ content: `✅ **${target.username}** has been completely removed from the system!`, embeds: [], components: [] });
         }
       );
     }
@@ -340,10 +348,7 @@ module.exports = {
       const number = interaction.options.getInteger('number');
       const resources = getResources(course);
 
-      if (resources.length === 0) {
-        return interaction.editReply({ content: `⚠️ No resources found for **${course}**!` });
-      }
-
+      if (resources.length === 0) return interaction.editReply({ content: `⚠️ No resources found for **${course}**!` });
       if (number < 1 || number > resources.length) {
         return interaction.editReply({ content: `⚠️ Invalid number. **${course}** has ${resources.length} resource(s). Pick a number between 1 and ${resources.length}.` });
       }
@@ -351,13 +356,12 @@ module.exports = {
       const removed = resources[number - 1];
       resources.splice(number - 1, 1);
 
-      const all = require('../utils/resourceManager').readResources();
+      const { readResources, writeResources } = require('../utils/resourceManager');
+      const all = readResources();
       all[course] = resources;
-      require('../utils/resourceManager').writeResources(all);
+      writeResources(all);
 
-      return interaction.editReply({
-        content: `✅ Removed resource **"${removed.title}"** from **${course}**!`,
-      });
+      return interaction.editReply({ content: `✅ Removed resource **"${removed.title}"** from **${course}**!` });
     }
 
     // ========================
@@ -367,23 +371,18 @@ module.exports = {
       const course = normalizeCourse(interaction.options.getString('course').trim());
       const resources = getResources(course);
 
-      if (resources.length === 0) {
-        return interaction.editReply({ content: `⚠️ No resources found for **${course}**!` });
-      }
+      if (resources.length === 0) return interaction.editReply({ content: `⚠️ No resources found for **${course}**!` });
 
       await confirmAction(
         interaction,
         `You are about to wipe all **${resources.length} resource(s)** for **${course}**. This cannot be undone.`,
         async () => {
-          const all = require('../utils/resourceManager').readResources();
+          const { readResources, writeResources } = require('../utils/resourceManager');
+          const all = readResources();
           delete all[course];
-          require('../utils/resourceManager').writeResources(all);
+          writeResources(all);
 
-          await interaction.editReply({
-            content: `✅ Cleared all resources for **${course}**!`,
-            embeds: [],
-            components: []
-          });
+          await interaction.editReply({ content: `✅ Cleared all resources for **${course}**!`, embeds: [], components: [] });
         }
       );
     }
@@ -416,13 +415,55 @@ module.exports = {
             fs.writeFileSync(path.join(dataDir, info.file), info.empty);
           }
 
-          await interaction.editReply({
-            content: `✅ **${targetLabel}** has been wiped successfully!`,
-            embeds: [],
-            components: []
-          });
+          await interaction.editReply({ content: `✅ **${targetLabel}** has been wiped successfully!`, embeds: [], components: [] });
         }
       );
+    }
+
+    // ========================
+    // /admin addrole
+    // ========================
+    if (sub === 'addrole') {
+      const target = interaction.options.getUser('user');
+      const roleName = interaction.options.getString('role');
+
+      let member = guild.members.cache.get(target.id);
+      if (!member) member = await guild.members.fetch(target.id).catch(() => null);
+
+      if (!member) return interaction.editReply({ content: `⚠️ Could not find **${target.username}** in the server!` });
+
+      const role = guild.roles.cache.find(r => r.name === roleName);
+      if (!role) return interaction.editReply({ content: `⚠️ Role **${roleName}** does not exist! Try restarting the bot to auto-create roles.` });
+
+      if (member.roles.cache.has(role.id)) {
+        return interaction.editReply({ content: `⚠️ **${target.username}** already has the **${roleName}** role!` });
+      }
+
+      await member.roles.add(role);
+      return interaction.editReply({ content: `✅ Added **${roleName}** to **${target.username}**!` });
+    }
+
+    // ========================
+    // /admin removerole
+    // ========================
+    if (sub === 'removerole') {
+      const target = interaction.options.getUser('user');
+      const roleName = interaction.options.getString('role');
+
+      let member = guild.members.cache.get(target.id);
+      if (!member) member = await guild.members.fetch(target.id).catch(() => null);
+
+      if (!member) return interaction.editReply({ content: `⚠️ Could not find **${target.username}** in the server!` });
+
+      const role = guild.roles.cache.find(r => r.name === roleName);
+      if (!role) return interaction.editReply({ content: `⚠️ Role **${roleName}** does not exist!` });
+
+      if (!member.roles.cache.has(role.id)) {
+        return interaction.editReply({ content: `⚠️ **${target.username}** does not have the **${roleName}** role!` });
+      }
+
+      await member.roles.remove(role);
+      return interaction.editReply({ content: `✅ Removed **${roleName}** from **${target.username}**!` });
     }
   }
 };

@@ -13,6 +13,25 @@ const client = new Client({
   ]
 });
 
+const COLLEGE_ROLES = [
+  'College of Architecture',
+  'College of Arts and Letters',
+  'College of Education',
+  'College of Engineering',
+  'College of Fine Arts',
+  'College of Home Economics',
+  'College of Human Kinetics',
+  'College of Law',
+  'College of Media and Communication',
+  'College of Music',
+  'College of Science',
+  'College of Social Sciences and Philosophy',
+  'National College of Public Administration and Governance',
+  'School of Economics',
+  'School of Library and Information Studies',
+  'School of Statistics',
+];
+
 // Load commands
 client.commands = new Collection();
 const commandsPath = path.join(__dirname, 'commands');
@@ -27,18 +46,29 @@ for (const file of commandFiles) {
 }
 
 // Events
-client.once('clientReady', () => {
+client.once('clientReady', async () => {
   console.log(`✅ Logged in as ${client.user.tag}`);
   console.log(`📦 Commands loaded: ${client.commands.size}`);
-  client.user.setPresence({
-    activities: [
-      {
-        name: 'stuDYING 📚',
-        type: 0 // PLAYING
+
+  // Auto-create college roles
+  const guild = client.guilds.cache.get(process.env.GUILD_ID);
+  if (guild) {
+    console.log('🎓 Checking college roles...');
+    for (const roleName of COLLEGE_ROLES) {
+      const exists = guild.roles.cache.find(r => r.name === roleName);
+      if (!exists) {
+        await guild.roles.create({
+          name: roleName,
+          hoist: true,
+          mentionable: false,
+          permissions: [],
+        });
+        console.log(`✅ Created role: ${roleName}`);
       }
-    ],
-    status: 'online'
-  });
+    }
+    console.log('✅ College roles check complete!');
+  }
+
   // Check and reset streaks every hour
   setInterval(() => {
     checkAndResetStreaks();
@@ -55,7 +85,6 @@ client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
   const command = client.commands.get(interaction.commandName);
-
   if (!command) return;
 
   try {
