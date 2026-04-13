@@ -1,8 +1,17 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits, ChannelType } = require('discord.js');
 const { getUser, saveUser, updateUser, readDB, writeDB, getClassmatesByClass } = require('../utils/database');
 const { getResources } = require('../utils/resourceManager');
 const { COLLEGE_ROLES, collegeChoices } = require('../constants/colleges');
-const { setReportPingRoleId } = require('../utils/guildConfig');
+const {
+  setReportPingRoleId,
+  setReportChannelId,
+  getReportPingRoleId,
+  getReportChannelId,
+  getConfessionReviewChannelId,
+  setConfessionReviewChannelId,
+  getConfessionPostChannelId,
+  setConfessionPostChannelId
+} = require('../utils/guildConfig');
 const { getOrCreateClassChannel, applyClassChannelPermissions } = require('../utils/channelManager');
 const { getAllStreaks } = require('../utils/streakManager');
 const fs = require('fs');
@@ -168,11 +177,46 @@ module.exports = {
         .addRoleOption(o => o.setName('role').setDescription('Role to list').setRequired(true)))
 
     .addSubcommand(sub =>
-      sub.setName('setreportrole')
-        .setDescription('Role to ping on /report (omit to clear)')
+      sub.setName('configurereports')
+        .setDescription('Set or view where /report posts and which role is pinged')
+        .addChannelOption(o =>
+          o.setName('channel')
+            .setDescription('Channel for incoming /report messages')
+            .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
+            .setRequired(false))
         .addRoleOption(o =>
           o.setName('role')
-            .setDescription('Ping this role on new reports')
+            .setDescription('Role to ping on new reports')
+            .setRequired(false))
+        .addBooleanOption(o =>
+          o.setName('clear_channel')
+            .setDescription('Remove the configured report channel')
+            .setRequired(false))
+        .addBooleanOption(o =>
+          o.setName('clear_role')
+            .setDescription('Remove the report ping role')
+            .setRequired(false)))
+
+    .addSubcommand(sub =>
+      sub.setName('configureconfessions')
+        .setDescription('Set or view confession review/post channels')
+        .addChannelOption(o =>
+          o.setName('review_channel')
+            .setDescription('Admin-only channel where confessions are reviewed')
+            .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
+            .setRequired(false))
+        .addChannelOption(o =>
+          o.setName('post_channel')
+            .setDescription('Public channel where approved confessions are posted')
+            .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
+            .setRequired(false))
+        .addBooleanOption(o =>
+          o.setName('clear_review_channel')
+            .setDescription('Remove the configured confession review channel')
+            .setRequired(false))
+        .addBooleanOption(o =>
+          o.setName('clear_post_channel')
+            .setDescription('Remove the configured confession post channel')
             .setRequired(false))),
 
   async execute(interaction) {
@@ -331,16 +375,147 @@ module.exports = {
     }
 
     // ========================
-    // /admin setreportrole
+    // /admin configurereports
     // ========================
-    if (sub === 'setreportrole') {
-      const role = interaction.options.getRole('role');
-      if (!role) {
-        setReportPingRoleId(null);
-        return interaction.editReply({ content: '✅ Report ping role cleared.' });
+    if (sub === 'configurereports') {
+      const channelOpt = interaction.options.getChannel('channel');
+      const roleOpt = interaction.options.getRole('role');
+      const clearChannel = interaction.options.getBoolean('clear_channel') === true;
+      const clearRole = interaction.options.getBoolean('clear_role') === true;
+
+      if (clearChannel && channelOpt) {
+        return interaction.editReply({ content: '⚠️ Use either **clear_channel** or **channel**, not both.' });
       }
-      setReportPingRoleId(role.id);
-      return interaction.editReply({ content: `✅ Reports will ping **${role.name}** (\`${role.id}\`).` });
+      if (clearRole && roleOpt) {
+        return interaction.editReply({ content: '⚠️ Use either **clear_role** or **role**, not both.' });
+      }
+
+      const doAnything = channelOpt || roleOpt || clearChannel || clearRole;
+
+      if (!doAnything) {
+        const storedCh = getReportChannelId();
+        const envCh = process.env.REPORT_CHANNEL_ID || null;
+        const effectiveCh = storedCh || envCh;
+        const roleId = getReportPingRoleId();
+
+        let channelLine = '— not set';
+        if (effectiveCh) {
+          const ch = guild.channels.cache.get(effectiveCh) || await guild.channels.fetch(effectiveCh).catch(() => null);
+          channelLine = ch
+            ? `${ch} (\`${effectiveCh}\`)${storedCh ? '' : ' · *from REPORT_CHANNEL_ID*'}`
+            : `invalid/missing channel (\`${effectiveCh}\`)${storedCh ? '' : ' · *from REPORT_CHANNEL_ID*'}`;
+        }
+
+        let roleLine = '— not set';
+        if (roleId) {
+          const rl = guild.roles.cache.get(roleId) || await guild.roles.fetch(roleId).catch(() => null);
+          roleLine = rl ? `${rl} (\`${roleId}\`)` : `invalid/missing role (\`${roleId}\`)`;
+        }
+
+        const embed = new EmbedBuilder()
+          .setTitle('📋 Report settings')
+          .addFields(
+            { name: 'Channel', value: channelLine, inline: false },
+            { name: 'Ping role', value: roleLine, inline: false }
+          )
+          .setColor(0x5865F2)
+          .setFooter({ text: 'Set channel/role options, or use clear_channel / clear_role.' });
+
+        return interaction.editReply({ embeds: [embed] });
+      }
+
+      const lines = [];
+      if (clearChannel) {
+        setReportChannelId(null);
+        lines.push('✅ Report channel cleared from bot config.');
+      } else if (channelOpt) {
+        if (!channelOpt.isTextBased()) {
+          return interaction.editReply({ content: '⚠️ Choose a text-based channel.' });
+        }
+        setReportChannelId(channelOpt.id);
+        lines.push(`✅ Report channel set to ${channelOpt} (\`${channelOpt.id}\`).`);
+      }
+
+      if (clearRole) {
+        setReportPingRoleId(null);
+        lines.push('✅ Report ping role cleared.');
+      } else if (roleOpt) {
+        setReportPingRoleId(roleOpt.id);
+        lines.push(`✅ Reports will ping **${roleOpt.name}** (\`${roleOpt.id}\`).`);
+      }
+
+      return interaction.editReply({ content: lines.join('\n') });
+    }
+
+    // ========================
+    // /admin configureconfessions
+    // ========================
+    if (sub === 'configureconfessions') {
+      const reviewChannelOpt = interaction.options.getChannel('review_channel');
+      const postChannelOpt = interaction.options.getChannel('post_channel');
+      const clearReviewChannel = interaction.options.getBoolean('clear_review_channel') === true;
+      const clearPostChannel = interaction.options.getBoolean('clear_post_channel') === true;
+
+      if (clearReviewChannel && reviewChannelOpt) {
+        return interaction.editReply({ content: '⚠️ Use either **clear_review_channel** or **review_channel**, not both.' });
+      }
+      if (clearPostChannel && postChannelOpt) {
+        return interaction.editReply({ content: '⚠️ Use either **clear_post_channel** or **post_channel**, not both.' });
+      }
+
+      const doAnything = reviewChannelOpt || postChannelOpt || clearReviewChannel || clearPostChannel;
+      if (!doAnything) {
+        const reviewChannelId = getConfessionReviewChannelId();
+        const postChannelId = getConfessionPostChannelId();
+
+        let reviewLine = '— not set';
+        if (reviewChannelId) {
+          const ch = guild.channels.cache.get(reviewChannelId) || await guild.channels.fetch(reviewChannelId).catch(() => null);
+          reviewLine = ch ? `${ch} (\`${reviewChannelId}\`)` : `invalid/missing channel (\`${reviewChannelId}\`)`;
+        }
+
+        let postLine = '— not set';
+        if (postChannelId) {
+          const ch = guild.channels.cache.get(postChannelId) || await guild.channels.fetch(postChannelId).catch(() => null);
+          postLine = ch ? `${ch} (\`${postChannelId}\`)` : `invalid/missing channel (\`${postChannelId}\`)`;
+        }
+
+        const embed = new EmbedBuilder()
+          .setTitle('🕵️ Confession settings')
+          .addFields(
+            { name: 'Review channel (admins)', value: reviewLine, inline: false },
+            { name: 'Post channel (public)', value: postLine, inline: false }
+          )
+          .setColor(0x5865F2)
+          .setFooter({ text: 'Set channels or use clear_review_channel / clear_post_channel.' });
+
+        return interaction.editReply({ embeds: [embed] });
+      }
+
+      const lines = [];
+      if (clearReviewChannel) {
+        setConfessionReviewChannelId(null);
+        lines.push('✅ Confession review channel cleared.');
+      } else if (reviewChannelOpt) {
+        if (!reviewChannelOpt.isTextBased()) {
+          return interaction.editReply({ content: '⚠️ Choose a text-based review channel.' });
+        }
+        setConfessionReviewChannelId(reviewChannelOpt.id);
+        lines.push(`✅ Confession review channel set to ${reviewChannelOpt} (\`${reviewChannelOpt.id}\`).`);
+      }
+
+      if (clearPostChannel) {
+        setConfessionPostChannelId(null);
+        lines.push('✅ Confession post channel cleared.');
+      } else if (postChannelOpt) {
+        if (!postChannelOpt.isTextBased()) {
+          return interaction.editReply({ content: '⚠️ Choose a text-based post channel.' });
+        }
+        setConfessionPostChannelId(postChannelOpt.id);
+        lines.push(`✅ Confession post channel set to ${postChannelOpt} (\`${postChannelOpt.id}\`).`);
+      }
+
+      return interaction.editReply({ content: lines.join('\n') });
     }
 
     // ========================

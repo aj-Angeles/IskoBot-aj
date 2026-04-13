@@ -10,6 +10,7 @@ A Discord bot built for the Iskord Community Server, a space for incoming UP Dil
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Configuration](#configuration)
+- [Recent commits](#recent-commits)
 - [Commands](#commands)
 - [Project Structure](#project-structure)
 - [Data Storage](#data-storage)
@@ -34,6 +35,7 @@ A Discord bot built for the Iskord Community Server, a space for incoming UP Dil
 - **FAQ System** — Keyword-based auto-responses for common questions
 - **College Advice** — Random college survival tips for freshmen
 - **Admin Suite** — Full admin command system for managing users, classes, resources, roles, and data
+- **User Reports** — Members can `/report` to staff; admins configure the report channel and ping role with `/admin configurereports` (no env-only channel requirement)
 
 ---
 
@@ -49,8 +51,8 @@ A Discord bot built for the Iskord Community Server, a space for incoming UP Dil
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/lexcetera/IskoBot.git
-cd IskoBot
+git clone https://github.com/aj-Angeles/IskoBot-aj.git
+cd IskoBot-aj
 ```
 
 **2. Install dependencies**
@@ -106,6 +108,14 @@ In the Discord Developer Portal under your app's **Bot** tab, enable:
 - Server Members Intent
 - Message Content Intent
 
+### Reports (`/report`)
+
+Staff destination is stored in `src/data/guildConfig.json` (auto-created). **Administrators** should run:
+
+- **`/admin configurereports`** — Set the **channel** where `/report` submissions are posted and the **role** to ping (optional). Run it with **no options** to see the current channel and ping role. Use **`clear_channel`** / **`clear_role`** booleans to remove stored values.
+
+Optional legacy: you can still set `REPORT_CHANNEL_ID` in `.env` as a fallback when no channel is stored in guild config (slash command settings take precedence when set).
+
 ### College Roles
 College roles are created automatically on first bot start. They will appear hoisted (separated) on the member list. The following roles will be created:
 - College of Architecture
@@ -124,6 +134,20 @@ College roles are created automatically on first bot start. They will appear hoi
 - School of Economics
 - School of Library and Information Studies
 - School of Statistics
+
+---
+
+## Recent commits
+
+Latest updates on this repository (see `git log` for full history):
+
+| Commit | Summary |
+|--------|---------|
+| `dd5dcfd` | Moved several commands under `/admin` (admin-only surface). |
+| `d5bcce6` | Auto-create college roles on first run; ephemeral `/admin addrole` / `removerole`. |
+| `cad81b6` | README table of contents fix. |
+
+After pulling, run `npm install`, then `node src/deploy.js` whenever slash commands change, then start the bot (`npm run prod` or `npm start`).
 
 ---
 
@@ -179,6 +203,12 @@ College roles are created automatically on first bot start. They will appear hoi
 | `/collegeinfo` | View student counts for all UP Diliman colleges |
 | `/collegeinfo <college>` | View students registered under a specific college |
 
+### Reports
+
+| Command | Description |
+|---|---|
+| `/report <user> <reason>` | Send a report to staff (ephemeral confirmation for the reporter). Requires a configured report channel. |
+
 ### Misc
 
 | Command | Description |
@@ -201,13 +231,14 @@ College roles are created automatically on first bot start. They will appear hoi
 | `/admin addrole <user> <role>` | Assign a college role to a user |
 | `/admin removerole <user> <role>` | Remove a college role from a user |
 | `/admin wipedata <target>` | Wipe bot data — choose from users, streaks, resources, faqs, or all |
+| `/admin configurereports` | Set or view the `/report` **channel** and **ping role**; optional `clear_channel` / `clear_role` |
 
 ---
 
 ## Project Structure
 
 ```
-IskoBot/
+IskoBot-aj/
 ├── src/
 │   ├── commands/
 │   │   ├── addclass.js
@@ -226,11 +257,13 @@ IskoBot/
 │   │   ├── collegeinfo.js
 │   │   ├── advice.js
 │   │   ├── help.js
+│   │   ├── report.js
 │   │   └── admin.js
 │   ├── data/                    <- auto-created on first run
 │   │   ├── users.json
 │   │   ├── streaks.json
 │   │   ├── resources.json
+│   │   ├── guildConfig.json
 │   │   └── faqs.json
 │   ├── events/
 │   │   ├── messageCreate.js     <- handles messages and streak tracking
@@ -241,6 +274,7 @@ IskoBot/
 │   │   ├── channelManager.js    <- class channel creation and management
 │   │   ├── streakManager.js     <- streak logic
 │   │   ├── resourceManager.js   <- resource file management
+│   │   ├── guildConfig.js       <- per-guild report settings
 │   │   └── faqManager.js        <- faq file management
 │   ├── deploy.js                <- registers slash commands with Discord
 │   └── index.js                 <- main entry point
@@ -297,6 +331,19 @@ Stores study resources per course.
   ]
 }
 ```
+
+### guildConfig.json
+
+Stores report routing for `/report`:
+
+```json
+{
+  "reportChannelId": "123456789012345678",
+  "reportPingRoleId": "987654321098765432"
+}
+```
+
+Managed via `/admin configurereports`. Omit or set keys to `null` when unused. Optional `REPORT_CHANNEL_ID` in `.env` is used only when `reportChannelId` is not set.
 
 ### faqs.json
 Stores keyword-response pairs for the FAQ system.

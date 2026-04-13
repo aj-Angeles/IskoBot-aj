@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { getReportPingRoleId } = require('../utils/guildConfig');
+const { getReportPingRoleId, getReportChannelId } = require('../utils/guildConfig');
 
 const REASON_MAX = 1000;
 
@@ -18,10 +18,10 @@ module.exports = {
         .setMaxLength(REASON_MAX)),
 
   async execute(interaction) {
-    const channelId = process.env.REPORT_CHANNEL_ID;
+    const channelId = getReportChannelId() || process.env.REPORT_CHANNEL_ID;
     if (!channelId) {
       return interaction.reply({
-        content: '⚠️ Reports are not configured (missing REPORT_CHANNEL_ID).',
+        content: '⚠️ Reports are not configured. An administrator can set the channel with `/admin configurereports`, or set `REPORT_CHANNEL_ID` in the bot environment.',
         ephemeral: true,
       });
     }

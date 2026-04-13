@@ -113,8 +113,8 @@ const pages = [
         value: '**(Administrators)** List all members who have a given role (long lists are split into multiple messages).'
       },
       {
-        name: '/admin setreportrole',
-        value: '**(Administrators)** Set which role is pinged on new `/report`s, or omit the role to clear.'
+        name: '/admin configurereports',
+        value: '**(Administrators)** Set the `/report` destination channel and staff ping role, view current settings, or use `clear_channel` / `clear_role`.'
       }
     ]
   },
@@ -123,7 +123,7 @@ const pages = [
     fields: [
       {
         name: '/report <user> <reason>',
-        value: 'Submit a report to staff. Configure `/admin setreportrole` for pings and REPORT_CHANNEL_ID in the bot environment.'
+        value: 'Submit a report to staff. Admins configure the channel and ping role with `/admin configurereports` (optional legacy: `REPORT_CHANNEL_ID` in `.env`).'
       },
       {
         name: '/advice',
