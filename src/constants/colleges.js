@@ -15,7 +15,6 @@ const COLLEGE_ROLES = [
   'School of Economics',
   'School of Library and Information Studies',
   'School of Statistics',
-  'Iskolar ng Bayan',
 ];
 
 const collegeChoices = COLLEGE_ROLES.map(name => ({ name, value: name }));

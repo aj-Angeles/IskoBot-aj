@@ -74,6 +74,10 @@ async function confirmAction(interaction, description, onConfirm) {
 }
 
 const roleChoices = COLLEGE_ROLES.map(r => ({ name: r, value: r }));
+roleChoices.push({
+  name: 'Iskolar ng Bayan',
+  value: 'Iskolar ng Bayan'
+});
 
 const DEMOGRAPHIC_ENV = [
   { env: 'DEMOGRAPHIC_HE_HIM_ROLE_ID', label: 'He/Him' },
