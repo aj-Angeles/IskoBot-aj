@@ -51,8 +51,8 @@ A Discord bot built for the Iskord Community Server, a space for incoming UP Dil
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/aj-Angeles/IskoBot-aj.git
-cd IskoBot-aj
+git clone https://github.com/aj-Angeles/IskoBot.git
+cd IskoBot
 ```
 
 **2. Install dependencies**
