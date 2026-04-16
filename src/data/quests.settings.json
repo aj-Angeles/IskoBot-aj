@@ -1,0 +1,9 @@
+{
+  "revealDayOfWeek": 0,
+  "revealStartHourUtc": 12,
+  "revealEndHourUtc": 23,
+  "leaderboardTopN": 10,
+  "globalCommitDayOfWeek": 6,
+  "globalCommitHourUtc": 0,
+  "globalCommitMinute": 0
+}

@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { getUser } = require('../utils/database');
 const { COLLEGE_ROLES } = require('../constants/colleges');
+const { getEarnedBadges, formatBadgesForEmbed } = require('../utils/questManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -39,6 +40,10 @@ module.exports = {
 
     const bioText = (user.bio && user.bio.trim()) ? user.bio.trim() : 'No bio set';
 
+    const guildId = interaction.guildId || process.env.GUILD_ID;
+    const badges = guildId ? getEarnedBadges(guildId, target.id) : [];
+    const badgeText = formatBadgesForEmbed(badges);
+
     const embed = new EmbedBuilder()
       .setTitle(`👤 ${target.username}'s Profile`)
       .setThumbnail(target.displayAvatarURL())
@@ -46,6 +51,7 @@ module.exports = {
         { name: '📝 Bio', value: bioText },
         { name: '🎓 College', value: collegeRole ? collegeRole.name : 'No college role assigned', inline: true },
         { name: '📚 Classes Registered', value: `${user.classes.length}`, inline: true },
+        { name: '🏆 Trophies', value: badgeText.slice(0, 1024) },
         { name: '📖 Class List', value: classList }
       )
       .setColor(0x5865F2)

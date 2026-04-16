@@ -19,6 +19,7 @@ const { applyClassChannelPermissions, classToChannelName } = require('./utils/ch
 const { getConfessionPostChannelId, getConfessionReviewChannelId } = require('./utils/guildConfig');
 const { createPendingConfession, getConfessionById, updateConfession } = require('./utils/confessionManager');
 const { CONFESSION_MODAL_ID, CONFESSION_INPUT_ID } = require('./commands/confess');
+const { maybeRunGlobalCommit } = require('./utils/questManager');
 const statusesData = require("./data/statuses.json");
 
 const client = new Client({
@@ -112,6 +113,14 @@ client.once('clientReady', async () => {
       }
     }
     console.log('✅ Class channel permission sync complete!');
+  }
+
+  const gid = process.env.GUILD_ID;
+  if (gid) {
+    maybeRunGlobalCommit(gid);
+    setInterval(() => {
+      maybeRunGlobalCommit(gid);
+    }, 1000 * 60 * 15);
   }
 
   // Check and reset streaks every hour
