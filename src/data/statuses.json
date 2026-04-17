@@ -1,0 +1,6 @@
+{
+  "statuses": [
+    { "name": "with your community", "type": "PLAYING" },
+    { "name": "for new messages", "type": "WATCHING" }
+  ]
+}

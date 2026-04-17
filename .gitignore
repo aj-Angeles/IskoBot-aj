@@ -5,3 +5,4 @@ src/data/*
 !src/data/quests.catalog.json
 !src/data/quests.badges.json
 !src/data/quests.settings.json
+!src/data/statuses.json

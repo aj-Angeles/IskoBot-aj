@@ -1,4 +1,12 @@
 {
   "version": 1,
-  "quests": {}
+  "quests": {
+    "self_UPD": {
+      "cadence": "daily",
+      "theme": "Daily Life",
+      "title": "Selfie sa DILIMan",
+      "description": "Take a selfie at the UP Diliman Campus somewhere with lots of light",
+      "points": 10
+    }
+  }
 }
